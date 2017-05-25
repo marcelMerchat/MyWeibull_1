@@ -1,0 +1,221 @@
+---
+title: "A Weibull Product Life Model"
+
+output: 
+  html_document
+    
+---
+
+## A Weibull Product Life Model for a Product using R-Tools
+
+<br><br>
+
+##### May 25, 2017
+##### Prepared by Marcel Merchat
+
+<br><br>
+
+###   Summary
+
+THIS FILE IS UNDER CONSTRUCTION. 
+
+THIS COMMIT SETS-UP THIS SHARED GITHUB CONNECTION. 
+
+We begin with some product life data for a battery. examine the project review scores for a group of students that are recorded in a MySQL database. The database is queried and managed by the RMySQL R package that passes Structured Query Language (SQL) commands and queries to it and receive information from the database returns. The SQL commands are highlighted in red.
+
+<br><br>
+
+### Table of Contents:
+
+##### a) Connect to Database 
+##### b) Relational Database Structure
+##### c) SQL Commands and Queries
+##### d) Statistics
+ 
+```{r setup, results='hide', echo = FALSE, message=F, warning=F,cache=FALSE}
+
+library(RMySQL)
+library(lattice)
+library(ggplot2)
+library(glmnet)
+library(psych)
+library(xtable)
+library(grid)
+library(gridExtra)
+library(stats)
+
+oldw <- getOption("warn")
+options(warn = -1)
+
+## knit2html('input.Rmd', stylesheet = 'bootstrap.css')
+## Prepare the database for use
+
+all_cons <- dbListConnections(MySQL())
+for(con in all_cons) 
+  dbDisconnect(con)
+
+```
+
+<br><br>
+
+### (a) Connect to Database
+
+We connect to the MySQL database passing the MySQL user name and password. The function below returns an object or handle called "mysqlconnection.
+
+```{r connect, echo=TRUE}
+
+mysqlconnection <- dbConnect(MySQL(), user = 'root', password = 'ialsql1851', dbname = 'studenttest',
+                            host = 'localhost')
+```
+
+<br><br>
+
+### (b) Relational Database Structure
+
+<br><br>
+
+#### Tables
+The relational database for the students has six tables named absences, classes, reviews, scores, students, and tests. The student review information is in a table called  "reviews." 
+
+```{r list_tables, echo=TRUE}
+
+dbListTables(mysqlconnection)
+
+```
+
+<br><br>
+
+#### Student Records  
+
+We first examine the general table for student information. 
+
+```{r studentrecords1, echo=TRUE}
+
+print(dbGetQuery(mysqlconnection, "select student_id, first_name, last_name,
+                 city, state, zip from students where student_id < 9;"))
+
+```
+
+<br><br>
+
+#### The Review Table
+This table has four columns or fields of information. Notice the important data type property for each column. The student_id column is designated "PRI" which indicates that it is a primary key for the database.
+
+```{r reviewcolumns, echo=TRUE}
+print(dbGetQuery(mysqlconnection, "Describe reviews;"))
+
+
+```
+
+
+<br><br>
+
+### (c) SQL Commands and Queries
+
+<br><br>
+
+#### Review Data
+Four of the students have scheduled review appointments.  Notice that the Student with ID Number 4 has a review score of 75.
+
+```{r initialscores, echo=TRUE}
+
+print(dbGetQuery(mysqlconnection, "select * from reviews;"))
+
+```
+
+<br><br>
+
+#### Change Grade for Student-4
+The score of Student Number 4 has been changed from 75 to 80.
+
+```{r printupdate1, echo=TRUE}
+
+dbSendQuery(mysqlconnection, "Update reviews set score=80 where student_id = 4;")
+print(dbGetQuery(mysqlconnection, "select * from reviews;"))
+
+```
+
+<br><br>
+
+#### Summary Statistics
+
+We exploit basic statistics capability of the MySQL database to compute the average score. We could have imported the scores into the R-program to accomplish this too. But it best to use the database as much as possible for analysis so we would not have to be more concerned about protecting student privacy.
+
+```{r avgcompute, echo=FALSE, results='hide'}
+
+Review_Statistics <- dbGetQuery(mysqlconnection, "Select
+                  Max(score) AS Maximum,                 
+                  AVG(score) AS Average,
+                  MIN(score) AS Minimum
+                  from Reviews;")
+
+```
+
+<br><br>
+
+### (d) Statistics
+
+<br><br>
+
+#### Average Student Score
+
+```{r printavgscore, echo=TRUE}
+
+Review_Statistics <- dbGetQuery(mysqlconnection, "Select
+                  Max(score) AS Maximum,                 
+                  AVG(score) AS Average,
+                  MIN(score) AS Minimum
+                  from Reviews;")
+
+print(Review_Statistics)
+
+
+```
+
+
+
+<br><br>
+
+#### Histogram of Student Scores
+However, as needed we can use the R program to anaylse student data further as in the following histogram.
+
+```{r getdata, echo=TRUE}
+
+student_scores <- dbGetQuery(mysqlconnection, "select score from reviews;")
+
+```
+
+```{r prepare_histogram, echo=FALSE}
+
+histogram_1 <- ggplot(student_scores, aes(score)) +
+    geom_histogram(binwidth = 5, fill="deepskyblue" ) +
+      ggtitle("Review Scores") +
+  
+    theme(plot.title = element_text(hjust = 0.5, color="#993333", size=24, face="bold.italic"),
+    axis.title.x = element_text(color="#993333", size=22),
+    axis.title.y = element_text(color="#993333", size=22),
+    text = element_text(size=20),
+    panel.background = element_rect(fill = "#EFE5E5", colour = "brown",
+    size = 0.5, linetype = "solid"),
+    plot.background = element_rect(fill = "#E0DADA"))
+
+```
+
+```{r histogram, echo=TRUE, fig.width=7, fig.height=4, results='asis'}
+
+histogram_1
+
+student_scores <- dbGetQuery(mysqlconnection, "select score from reviews;")
+
+print(student_scores)
+
+all_cons <- dbListConnections(MySQL())
+for(con in all_cons) 
+  dbDisconnect(con)
+
+```
+
+
+<br><br>
+
+#### THE END
