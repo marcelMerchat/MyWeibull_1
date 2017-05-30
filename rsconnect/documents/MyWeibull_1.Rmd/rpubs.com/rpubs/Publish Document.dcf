@@ -1,0 +1,8 @@
+name: Publish Document
+title:
+account: rpubs
+server: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/280884/f2a505870a6743ae9fedcd71f8b93867
+bundleId: https://api.rpubs.com/api/v1/document/280884/f2a505870a6743ae9fedcd71f8b93867
+url: http://rpubs.com/marcelMerchat/280884
+when: 1496176083.20502
